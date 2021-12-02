@@ -113,13 +113,94 @@ While vm2 allows us to explicitly define an allowlist of imported modules, there
 1. As described above, extensions generally rely on external modules, and examining the security of each external module is impractical
 2. More importantly, we demand finer-grained sandboxing to control an extension’s file read/write permissions under a specific directory 
   
-To this end, we take advantage of vm2’s mock option which allows us to supply the sandbox with mocked modules. We  
+To this end, we take advantage of vm2’s mock option which allows us to supply the sandbox with mocked modules. We create wrapper modules for built-in modules such that we wrap the built-in module’s methods with our checker code to ensure the operations comply with the access control policy. With this approach we could, for example, examine the exact file path or network endpoint that the extension is attempting to access and make more fine-grained decisions. As a proof of concept, we describe how we mocked the built-in https and fs modules below.
+
+https Given the complexity of the built-in packages, we began by wrapping the https module as it only has four methods. We created a new object that contained methods with identical names and parameters as those in the https module. Whenever a method was invoked, it was redirected to our mocked methods instead. For https, on each network access we prompt the user with a message indicating that an extension is attempting to send a request to the specified endpoint. Users then have the choice of allowing the request to proceed, in which case we forward the request to the original https method, or they can block the request.
+
+fs fs is a Node standard package which provides POSIX like APIs to interact with the file system [5]. We choose to wrap fs because if we can sandbox these APIs, many other third-party modules (such as fs-extra [20] and async-fs-wrapper [11]) that rely on fs to access file system can be sandboxed as well.
+ 
+In our case, we want to create a wrapper module of fs such that, given a VS Code extension and an access control policy (i.e. an allowlist of directories per extension), the exposed APIs in the extension can only perform file system operations on directories specified in the policy. We manually went through each function and class in fs to decide whether it should be wrapped. We checked if the function performs read-/write operations to either a file’s content (e.g., readFile), or to a file’s status (e.g. chmod). We wrap a function only if it reads a file’s content or modifies a file’s content/status. The analysis is summarized in a table in Appendix A.
+
+To efficiently create wrapper functions, inspired by sandboxed-fs [17] which binds all file system accesses under a specific path, we categorize the functions into three types based on their argument patterns shown in Table 2.
+
+For each category, we create a wrapper function that takes the original fs API, policy associated with the extension, and a flag indicating if this API performs a read or write. We then apply the policy to determine if the extension is allowed to access the specified file. If not, we throw an error, else we call the original function. In this way, we can efficiently replace methods in fs with our desired wrapper module.
+
+As an example, code block 2 shows how copyFile we wrap, a method which copies a file from one path to another. Correspondingly, we check if the source is readable and if the destination is writable before calling the original copyFile. Here, the function checkAccessibility is applied, which will throw an error if the input path does not comply with the policy.
+  
+In addition, there are two edge cases that we handle specially. First, we have a dedicated function wrapper for open() and openSync(). With this, we do not have to wrap those “oneFileFunctions” whose 1st argument is a file descriptor (e.g. ftruncate), because before the file descriptor is obtained via an open call, the accessibility would have been checked. Second, fs provides classes ReadStream and WriteStream. Instead of wrapping these classes, we wrap their constructors createReadStream and createWriteStream in order to control how Stream objects access the file system.
   
 ### 4.3 Putting Things Together
+Figure 1 shows our overall implementation to sandbox file system accesses by extensions. Built-in extensions are not sandboxed and are free to access the file system either by itself or via APIs provided in the vscode engine. For external extensions, each of them is contextified by vm2 when loaded. The vscode engine is passed to the sandboxed extension and it’s allowed to use VS Code APIs to access the workspace. However, the fs module is wrapped as per its local allowlist and the global blocklist. Note that the global blocklist invalidates paths or file names in the local allowlist.
+  
 ## 5 Evaluation
 ### 5.1 Case Study with Prettier
+To test our sandbox implementation, we use Prettier to do a case study. Prettier is an extension in VS Code marketplace that formats code written for a range of languages. We choose Prettier because it’s open source, has simple functionalities (which eases the testing process), and is ranked as the 5th most popular extension in the marketplace.
+  
+To format (read and write) source files in the workspace, Prettier does not call fs APIs. Instead, it calls vscode APIs such as TextEdit and TextDocument, which is regarded as a safe practice. However, Prettier does use modules that import fs. From the OS-level perspective, as shown in 1, the directories accessed by Prettier are seemingly safe. As previously discussed in our proposal, these directories will form an allowlist as a manifest file shipped with Prettier.
+
+With our sandbox, we want to test if any calls via fs to locations outside of the allowlist will be blocked. To simulate a malicious extension camouflaging as Prettier, we deliberately hide a piece of code inside a library file PrettierEditProvider.ts (shown in code block 3), where we invoke fs.readFile to read the secret key in $HOME/.ssh/id_rsa and make an HTTP PUT request to upload the key to Microsoft Azure. This will run whenever user runs the command Format Document. Next, we integrate vm2 and the fs wrapper module into VS Code as shown in code block 1. Running with VS Code release/1.35 and Prettier v3.0.0, we have observed that our fs wrapper module successfully blocked accesses: the formatting command is disabled with the thrown exception showing that the path $HOME/.ssh/id_rsa is inaccessible. Meanwhile, other file reads/writes that conform to the policy are allowed (e.g. calling readdirSync on the workspace to get .prettierignore ).
+  
 ### 5.2 Issues with vm2
+Whiel performing the above work, we have found two major issues in continuing with vm2.
+  
+1. For Node versions 12 and above, require(’events’) throws a runtime error due to an update in the way Node loads internals; thus, libraries required by internal events cannot be loaded [23]. In our implementation, we avoid this issue by using VS Code release/1.35 (released in Jun, 2019), which is compatible with Node v10. However, to solve this issue for recent Node versions, one needs to customize the EventEmitter implementation in vm2.
+2. Since vm2 loads built-in modules as read-only objects, any attempts to modify these modules’ prototypes would trigger a TypeError. Due to this, modules such as fs-extra and graceful-fs cannot be loaded [22]. As a result, many more extensions (such as vscode-git) cannot be successfully activated in the sandbox.
+  
+In addition, we should note that we did not audit vm2 itself and instead came to our conclusions about its effectiveness solely based on the observable outcomes of our evaluation. In particular, we did not examine the truth behind the vm2 authors’ claim in their documentation that vm2 is "...immune to all known methods of attacks" [18].
+  
 ## 6 Future work
+If we continue with the vm2 approach to sandbox extensions, we will first need to address the issues with vm2 mentioned above and fully examine the security aspects of vm2. In addition, similar to how we have wrapped fs, we should wrap the child_process module as system commands can be used to bypass the sandboxed APIs in fs.
+  
+Instead of relying on vm2, another approach may refer to the native policy permissions that may be implemented in Node in the future [10], where JavaScript APIs will be provided to grant/deny certain file system or network operations. This is, however, a work in progress parallel to ours that requires future follow up.
+  
 ## 7 Conclusion
+In this project, we have investigated the vulnerability of the VS Code extension model. As we primarily focus on restricting file system accesses, we propose to ship access control policies as manifest files with VS Code extensions. We apply this policy by building a sandboxing layer on top of untrusted packages and supplying these to the extensions. We have traced a few most popular extensions to discover their file system access patterns in the OS level. As a proof of concept, we wrap the fs module and apply vm2 to VS Code to implement a sandboxing solution and demonstrate its effectiveness on a compromised Prettier extension.
+  
 ## References
+[1] Android developer documentation - manifest overview. https://developer.android.com/guide/topics/manifest/manifest-intro.
+
+[2] C/c++ tools extension reading process info. https://github.com/microsoft/vscode-cpptools/blob/master/Extension/src/Debugger/attachToProcess.ts#L158.
+
+[3] Extensions for the visual studio family of products. https://marketplace.visualstudio.com/.
+  
+[4] Information property list files. https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/AboutInformationPropertyListFiles.html.
+
+[5] Node.js v10.21.0 documentation (file system). https://nodejs.org/docs/latest-v10.x/api/fs.html.
+
+[6] Prettier extension. https://github.com/prettier/prettier-vscode.
+
+[7] Seccomp security profiles for docker. https://docs.docker.com/engine/security/seccomp/.
+
+[8] strace: linux syscall tracer. https://strace.io/.
+
+[9] V8 interceptors. https://v8.dev/docs/embed#interceptors.
+
+[10] [wip] src,lib: policy permissions. https://github.com/nodejs/node/pull/33504.
+
+[11] Bill Beesley. async-fs-wrapper. https://www.npmjs.com/package/async-fs-wrapper.
+  
+[12] Brett Cannon. Tweak settings to prevent accidental execution of code from within a workspace., October 2019. github.com/microsoft/vscode-python/issues/7805.
+
+[13] Filippo Cremonese. Don’t clone that repo: Vs code^2 execution., March 2020. https://blog.doyensec.com/2020/03/16/vscode_codeexec.html.
+
+[14] VS Code Official Docs. Our approach to extensibility. vscode-docs.readthedocs.io/en/stable/extensions/our-approach/.
+
+[15] man7.org. seccomp - operate on secure computing state of the process. man7.org/linux/man-pages/man2/seccomp.2.html.
+
+[16] Brian McDaniel. Contextify. https://www.npmjs.com/package/contextify.
+
+[17] Metarhia. sandboxed-fs. https://www.npmjs.com/package/sandboxed-fs.
+
+[18] Node.js. Vm (executing javascript). https://nodejs.org/api/vm.html.
+
+[19] PowerSheetAi. [feature request] extension permissions, security sandboxing & update management proposal #52116., June 2018. https://github.com/microsoft/vscode/issues/52116.
+
+[20] JP Richardson. fs-extra. https://www.npmjs.com/package/fs-extra.
+
+[21] Patrik Simek. vm2. https://www.npmjs.com/package/vm2.
+
+[22] Cristian Alexandru Staicu. Modifying read-only prototypes trigger runtime errors. https://github.com/patriksimek/vm2/issues/290.
+
+[23] Luca Tabone. require(‘events’) does not work on node version 12. https://github.com/patriksimek/vm2/issues/216.
+  
 ## A fs APIs
