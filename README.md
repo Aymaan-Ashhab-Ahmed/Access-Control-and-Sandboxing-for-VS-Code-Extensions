@@ -63,3 +63,23 @@ Table 1: strace results for popular extensions
 The integrity of this manifest file is crucial. For those extensions distributed via a marketplace (like Google Play [1] or the AppStore [4]), the manifest file would be digitally signed by the marketplace owner. For those distributed by third parties as VSIX bundles, there is no automatic mechanism to verify and trust the manifest file that the extension presents to VS Code. Therefore, we propose to present this file to the user when they install the extension and before the extension is allowed to run. After the installation, the manifest file itself will be protected by the blocklist, which means that malicious extensions cannot modify any manifest file or modify its own allowlist.
 
 Besides ensuring the integrity of the manifest file itself, the blocklist could include globally sensitive files, such as private RSA keys, if necessary.
+
+## 3.2 The Per-extension Allowlist
+In this section, we summarize Table 1 to categorize file accesses based on the path. First, the allowlist should include the project workspace folder and the folder in which the extension was installed. These two folders are necessary for any extension to run and usually contain no secret files to block. However, the user is still able to use the global blocklist to protect any sensitive files (such as database configurations) in their code base as necessary.
+
+The second category is system libraries and tool chains. For example, the C/C++ extension must read headers and libraries from /usr/include and /lib/x86_64-linux-gnu; the Java extension must read /usr/local/java/jdk12; the Python extension must read /usr/lib/python3.8; etc. It is obviously reasonable to grant read access to these paths. Write access to these system libraries is not needed and therefore not granted in the allowlist.
+
+The third category, configuration files, is trickier. Many extensions, including the JavaScript and TypeScript extensions, access network configuration files like /etc/hosts and /etc/resolv.conf. In general, any extensions that might need online resources (e.g. looking through a package manager list) would need access to these configurations. Therefore, we decided to put these files in the default allowlist. Other resources under /etc, such as local time, can be added to the allowlist as well. However, the /etc directory should not be allowed as a whole, as a lot of software place their configuration, often confidential, in that directory.
+
+The fourth category is the user’s home directory. Generally, the home directory contains all of the user’s private files and the extension should not have access by default; however, we did find some extensions that do access files within this domain. For example, the Prettier extension [6] stores its local configuration in a .prettierrc file. The extension would not only look for this file in the project workspace’s folder, but it would also attempt to read this file in all of its parent directories. The allowlist would allow /home/ubuntu/.prettierrc, but it would have to provide access to /home/.prettierrc and /.prettierrc as well. Therefore, we need to add the filename /.prettierrc to the allowlist, instead of a path, so that any paths matching the filename would be allowed.
+
+## 4 Sandboxing Implementation
+### 4.1 OS-level Approach
+#### 4.1.1 seccomp
+#### 4.1.2 ptrace
+#### 4.1.3 Complications
+### 4.2 Node-level Approach
+#### 4.2.1 vm2
+#### 4.2.2 Contextifying an Extension in vm2
+#### 4.2.3 Mocked Modules
+## 4.3 Putting Things Together
