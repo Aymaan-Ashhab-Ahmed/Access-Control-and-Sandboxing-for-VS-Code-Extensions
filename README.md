@@ -108,6 +108,13 @@ The vscode module deserves an additional look due to the way in which VS Code su
 Another work around is to supply this module via the "sandbox" option so that it becomes an accessible object in the sandbox environment. However, this approach does not work on some extensions because they may alias the imported extension using different names. For example, in the extension vscode-git’s source code, it contains const vscode_1 = require(’vscode’);.
 
 #### 4.2.3 Mocked Modules
+While vm2 allows us to explicitly define an allowlist of imported modules, there are two issues:
+
+1. As described above, extensions generally rely on external modules, and examining the security of each external module is impractical
+2. More importantly, we demand finer-grained sandboxing to control an extension’s file read/write permissions under a specific directory 
+  
+To this end, we take advantage of vm2’s mock option which allows us to supply the sandbox with mocked modules. We  
+  
 ### 4.3 Putting Things Together
 ## 5 Evaluation
 ### 5.1 Case Study with Prettier
