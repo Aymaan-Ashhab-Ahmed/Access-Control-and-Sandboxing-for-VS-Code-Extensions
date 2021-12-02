@@ -157,50 +157,28 @@ Instead of relying on vm2, another approach may refer to the native policy permi
 In this project, we have investigated the vulnerability of the VS Code extension model. As we primarily focus on restricting file system accesses, we propose to ship access control policies as manifest files with VS Code extensions. We apply this policy by building a sandboxing layer on top of untrusted packages and supplying these to the extensions. We have traced a few most popular extensions to discover their file system access patterns in the OS level. As a proof of concept, we wrap the fs module and apply vm2 to VS Code to implement a sandboxing solution and demonstrate its effectiveness on a compromised Prettier extension.
   
 ## References
-[1] Android developer documentation - manifest overview. https://developer.android.com/guide/topics/manifest/manifest-intro.
-
-[2] C/c++ tools extension reading process info. https://github.com/microsoft/vscode-cpptools/blob/master/Extension/src/Debugger/attachToProcess.ts#L158.
-
-[3] Extensions for the visual studio family of products. https://marketplace.visualstudio.com/.
-  
-[4] Information property list files. https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/AboutInformationPropertyListFiles.html.
-
-[5] Node.js v10.21.0 documentation (file system). https://nodejs.org/docs/latest-v10.x/api/fs.html.
-
-[6] Prettier extension. https://github.com/prettier/prettier-vscode.
-
-[7] Seccomp security profiles for docker. https://docs.docker.com/engine/security/seccomp/.
-
-[8] strace: linux syscall tracer. https://strace.io/.
-
-[9] V8 interceptors. https://v8.dev/docs/embed#interceptors.
-
-[10] [wip] src,lib: policy permissions. https://github.com/nodejs/node/pull/33504.
-
-[11] Bill Beesley. async-fs-wrapper. https://www.npmjs.com/package/async-fs-wrapper.
-  
-[12] Brett Cannon. Tweak settings to prevent accidental execution of code from within a workspace., October 2019. github.com/microsoft/vscode-python/issues/7805.
-
-[13] Filippo Cremonese. Don’t clone that repo: Vs code^2 execution., March 2020. https://blog.doyensec.com/2020/03/16/vscode_codeexec.html.
-
-[14] VS Code Official Docs. Our approach to extensibility. vscode-docs.readthedocs.io/en/stable/extensions/our-approach/.
-
-[15] man7.org. seccomp - operate on secure computing state of the process. man7.org/linux/man-pages/man2/seccomp.2.html.
-
-[16] Brian McDaniel. Contextify. https://www.npmjs.com/package/contextify.
-
-[17] Metarhia. sandboxed-fs. https://www.npmjs.com/package/sandboxed-fs.
-
-[18] Node.js. Vm (executing javascript). https://nodejs.org/api/vm.html.
-
-[19] PowerSheetAi. [feature request] extension permissions, security sandboxing & update management proposal #52116., June 2018. https://github.com/microsoft/vscode/issues/52116.
-
-[20] JP Richardson. fs-extra. https://www.npmjs.com/package/fs-extra.
-
-[21] Patrik Simek. vm2. https://www.npmjs.com/package/vm2.
-
-[22] Cristian Alexandru Staicu. Modifying read-only prototypes trigger runtime errors. https://github.com/patriksimek/vm2/issues/290.
-
-[23] Luca Tabone. require(‘events’) does not work on node version 12. https://github.com/patriksimek/vm2/issues/216.
+1. Android developer documentation - manifest overview. https://developer.android.com/guide/topics/manifest/manifest-intro.
+2. C/c++ tools extension reading process info. https://github.com/microsoft/vscode-cpptools/blob/master/Extension/src/Debugger/attachToProcess.ts#L158.
+3. Extensions for the visual studio family of products. https://marketplace.visualstudio.com/.
+4. Information property list files. https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/AboutInformationPropertyListFiles.html.
+5. Node.js v10.21.0 documentation (file system). https://nodejs.org/docs/latest-v10.x/api/fs.html.
+6. Prettier extension. https://github.com/prettier/prettier-vscode.
+7. Seccomp security profiles for docker. https://docs.docker.com/engine/security/seccomp/.
+8. strace: linux syscall tracer. https://strace.io/.
+9. V8 interceptors. https://v8.dev/docs/embed#interceptors.
+10. [wip] src,lib: policy permissions. https://github.com/nodejs/node/pull/33504.
+11. Bill Beesley. async-fs-wrapper. https://www.npmjs.com/package/async-fs-wrapper.
+12. Brett Cannon. Tweak settings to prevent accidental execution of code from within a workspace., October 2019. github.com/microsoft/vscode-python/issues/7805.
+13. Filippo Cremonese. Don’t clone that repo: Vs code^2 execution., March 2020. https://blog.doyensec.com/2020/03/16/vscode_codeexec.html.
+14. VS Code Official Docs. Our approach to extensibility. vscode-docs.readthedocs.io/en/stable/extensions/our-approach/.
+15. man7.org. seccomp - operate on secure computing state of the process. man7.org/linux/man-pages/man2/seccomp.2.html.
+16. Brian McDaniel. Contextify. https://www.npmjs.com/package/contextify.
+17. Metarhia. sandboxed-fs. https://www.npmjs.com/package/sandboxed-fs.
+18. Node.js. Vm (executing javascript). https://nodejs.org/api/vm.html.
+19. PowerSheetAi. [feature request] extension permissions, security sandboxing & update management proposal #52116., June 2018. https://github.com/microsoft/vscode/issues/52116.
+20. JP Richardson. fs-extra. https://www.npmjs.com/package/fs-extra.
+21. Patrik Simek. vm2. https://www.npmjs.com/package/vm2.
+22. Cristian Alexandru Staicu. Modifying read-only prototypes trigger runtime errors. https://github.com/patriksimek/vm2/issues/290.
+23. Luca Tabone. require(‘events’) does not work on node version 12. https://github.com/patriksimek/vm2/issues/216.
   
 ## A fs APIs
