@@ -47,3 +47,12 @@ Most of the file system behavior is as expected. However, the official C/C++ ext
 
 ## 3 Access Control Policy
 Based on our discoveries while monitoring extensions, we propose the following file system access policy. The policy defines the paths that an extension is allowed (an allowlist) or disallowed (a blocklist) to access. It is defined in a separate manifest file intended to be shipped with the extension.
+
+|   Ext.   | Usr config |   Sys config  |    Lib   |       Other       |
+|----------|------------|---------------|----------|-------------------|
+|   C/C++  |     No     | Linker cache  |  C libs  |     /proc/pid     |
+|   Java   |     No     | Network hosts |    JDK   |                   |
+|    JS    |     No     |      /etc     |    NPM   | /proc/filesystems |
+|    TS    |     Yes    |      /etc     |    NPM   |  CPU info & /tmp  |
+|  Python  |     No     |       No      | Py 2 & 3 |                   |
+| Prettier | prettierrc | Network hosts |    NPM   |      CPU info     |
