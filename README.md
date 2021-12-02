@@ -58,3 +58,8 @@ Based on our discoveries while monitoring extensions, we propose the following f
 | Prettier | prettierrc | Network hosts |    NPM   |      CPU info     |
 
 Table 1: strace results for popular extensions
+
+## 3.1 The Global Blocklist
+The integrity of this manifest file is crucial. For those extensions distributed via a marketplace (like Google Play [1] or the AppStore [4]), the manifest file would be digitally signed by the marketplace owner. For those distributed by third parties as VSIX bundles, there is no automatic mechanism to verify and trust the manifest file that the extension presents to VS Code. Therefore, we propose to present this file to the user when they install the extension and before the extension is allowed to run. After the installation, the manifest file itself will be protected by the blocklist, which means that malicious extensions cannot modify any manifest file or modify its own allowlist.
+
+Besides ensuring the integrity of the manifest file itself, the blocklist could include globally sensitive files, such as private RSA keys, if necessary.
