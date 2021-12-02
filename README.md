@@ -30,3 +30,17 @@ On Oct. 2, 2019, a code execution vulnerability in the VS Code Python extension 
 The extension would inspect the project folder and automatically select the Python environment (e.g. a virtualenv) without user consent. With this, for instance, one could run the calculator app on Apple’s OSX simply by adding the line os.exec("/Applications/Calculator.app") to the pylint sources in the environment. 
 
 Moving on, attackers may simply forge a Python virtualenv that contains a compromised pylint and place it into the workspace. VS Code persists the path to this virtualenv in the .vscode/settings.json file and naively trusts it without any user interaction. Therefore, when VS Code opens a Python file, it automatically sources and uses that environment, and the malicious pylint will execute. This issue is still open and has not been resolved [12].
+
+### 1.4 Motivation
+Regarding the vulnerability in the Python extension, we believe the root cause comes down to the design that all extensions are running as a user-domain process with no proper access control mechanism. As of today, such proposals are available as GitHub issues on VS Code’s repository but are not on the agenda. This specific proposal [19] details a plan for sandboxing, permission modification, safety reporting, and other mechanisms. The vulnerability, along with this proposal, formed the primary motivating factors behind our work on this project. 
+
+The remainder of this paper is structured as follows: Section 2 discusses our efforts to profile popular extensions and Section 3 details our proposed access control policies based on those results. Section 4 steps through our work on sandboxing extensions at both the OS level and the Node.js level. We describe our success at sandboxing the Prettier extension at the Node.js level in Section 5 and list pending items for future work in Section 6.
+
+## 2 Extension Behavior Monitoring
+We utilize the strace command [8] to monitor the behavior of some of the most popular VS Code extensions. Although it is possible to manually examine the extension’s source code to find static behavior, we prefer runtime tracing because it exposes dynamic behaviors.
+
+The strace command traces all system calls invoked by the target process, i.e. the extension host process in our case. With respect to our profiling, we focus on file system calls, and in particular open and openat. Our goal is to trace all paths that the extension host process attempts to access on behalf of the activated extensions. The paths include not only physical file paths, such as the home folder or library directories, but also virtual files like /proc.
+
+The extensions we choose are those that provide official language support for C/C++, Java, JavaScript, TypeScript, and Python, as well as a third-party code formatter Prettier. Table 1 lists the result.
+
+Most of the file system behavior is as expected. However, the official C/C++ extension enumerates all process information under /proc, including process status, which is not something we expected a language support extension to access. Based on our examination of the C/C++ extension’s source code, the C/C++ extension is shipped with a debugger which needs to attach itself to the target process [2].
