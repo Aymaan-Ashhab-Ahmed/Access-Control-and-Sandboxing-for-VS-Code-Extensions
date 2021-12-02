@@ -56,4 +56,5 @@ Based on our discoveries while monitoring extensions, we propose the following f
 |    TS    |     Yes    |      /etc     |    NPM   |  CPU info & /tmp  |
 |  Python  |     No     |       No      | Py 2 & 3 |                   |
 | Prettier | prettierrc | Network hosts |    NPM   |      CPU info     |
+
 Table 1: strace results for popular extensions
