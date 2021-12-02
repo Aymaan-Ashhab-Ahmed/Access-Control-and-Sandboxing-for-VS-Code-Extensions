@@ -44,3 +44,6 @@ The strace command traces all system calls invoked by the target process, i.e. t
 The extensions we choose are those that provide official language support for C/C++, Java, JavaScript, TypeScript, and Python, as well as a third-party code formatter Prettier. Table 1 lists the result.
 
 Most of the file system behavior is as expected. However, the official C/C++ extension enumerates all process information under /proc, including process status, which is not something we expected a language support extension to access. Based on our examination of the C/C++ extension’s source code, the C/C++ extension is shipped with a debugger which needs to attach itself to the target process [2].
+
+## 3 Access Control Policy
+Based on our discoveries while monitoring extensions, we propose the following file system access policy. The policy defines the paths that an extension is allowed (an allowlist) or disallowed (a blocklist) to access. It is defined in a separate manifest file intended to be shipped with the extension.
