@@ -57,7 +57,7 @@
 | Python   | No         | No            | Py 2 & 3 |                   |
 | Prettier | prettierrc | Network hosts | NPM      | CPU info          |
 
-Table 1: strace results for popular extensions
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Table 1: strace results for popular extensions
 
 ## 3.1 The Global Blocklist
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The integrity of this manifest file is crucial. For those extensions distributed via a marketplace (like Google Play [^1] or the AppStore [^4]), the manifest file would be digitally signed by the marketplace owner. For those distributed by third parties as VSIX bundles, there is no automatic mechanism to verify and trust the manifest file that the extension presents to VS Code. Therefore, we propose to present this file to the user when they install the extension and before the extension is allowed to run. After the installation, the manifest file itself will be protected by the blocklist, which means that malicious extensions cannot modify any manifest file or modify its own allow list.
@@ -134,7 +134,7 @@ function loadCommonJSModule<T>(
   // ...
 }
 ```
-Listing 1: Loading extensions with vm2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Listing 1: Loading extensions with vm2
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To load the extension, we read the file that contains the `activate` hook, whose directory is passed as `modulePath` by the extension host process. This file, along with other JavaScript files installed from the extension’s VSIX package under `$HOME/.vscode/extensions/<extension-name>`, may or may not have the ".js" file extension. As such, we handle this case explicitly, but it’s unclear why VS Code makes this design choice and how it’s handled internally. Since VS Code also maintains a separate node_modules folder for each extension, we tell vm2 where to look when requiring packages by passing it the callback function `resolve`.
 
@@ -168,7 +168,7 @@ Listing 1: Loading extensions with vm2
 | twoPathsFunctions | 1^{st} and 2^{nd} arguments are paths                               | copyFile, link, rename      |
 | openFunction      | a standalone type for open syscall                                  | open, openSync              |
 
-Table 2: Categories of fs APIs
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Table 2: Categories of fs APIs
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As an example, code block 2 shows how `copyFile` we wrap, a method which copies a file from one path to another. Correspondingly, we check if the source is readable and if the destination is writable before calling the original `copyFile`. Here, the function `checkAccessibility` is applied, which will throw an error if the input path does not comply with the policy.
   
@@ -190,7 +190,7 @@ export function make(extensionName: string) {
   return {...fs, ...wrapped};
 }
 ```
-Listing 2: Wrappingfs.copyFile
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Listing 2: Wrappingfs.copyFile
   
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition, there are two edge cases that we handle specially. First, we have a dedicated function wrapper for `open()` and `openSync()`. With this, we do not have to wrap those “oneFileFunctions” whose 1st argument is a file descriptor (e.g. `ftruncate`), because before the file descriptor is obtained via an `open` call, the accessibility would have been checked. Second, `fs` provides classes `ReadStream` and `WriteStream`. Instead of wrapping these classes, we wrap their constructors `createReadStream` and `createWriteStream` in order to control how `Stream` objects access the file system.
   
@@ -198,7 +198,7 @@ Listing 2: Wrappingfs.copyFile
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Figure 1 shows our overall implementation to sandbox file system accesses by extensions. Built-in extensions are not sandboxed and are free to access the file system either by itself or via APIs provided in the `vscode` engine. For external extensions, each of them is contextified by vm2 when loaded. The vscode engine is passed to the sandboxed extension and it’s allowed to use VS Code APIs to access the workspace. However, the `fs` module is wrapped as per its local allow list and the global blocklist. Note that the global blocklist invalidates paths or file names in the local allow list.
   
 ![](/assets/images/vscodeExtensionSandboxing_400dpi.png)
-Figure 1: Overall File System Sandboxing Mechanism
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Figure 1: Overall File System Sandboxing Mechanism
   
 ## 5 Evaluation
 ### 5.1 Case Study with Prettier
@@ -225,7 +225,7 @@ private safeExecution(
   });
 }
 ```
-Listing 3: Malicious code inserted to Prettier
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Listing 3: Malicious code inserted to Prettier
 
 ### 5.2 Issues with vm2
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;While performing the above work, we have found two major issues in continuing with vm2.
