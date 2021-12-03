@@ -189,6 +189,8 @@ In addition, there are two edge cases that we handle specially. First, we have a
 ### 4.3 Putting Things Together
 Figure 1 shows our overall implementation to sandbox file system accesses by extensions. Built-in extensions are not sandboxed and are free to access the file system either by itself or via APIs provided in the vscode engine. For external extensions, each of them is contextified by vm2 when loaded. The vscode engine is passed to the sandboxed extension and it’s allowed to use VS Code APIs to access the workspace. However, the fs module is wrapped as per its local allow list and the global blocklist. Note that the global blocklist invalidates paths or file names in the local allow list.
   
+![](/assets/images/vscodeExtensionSandboxing_400dpi.png)
+  
 ## 5 Evaluation
 ### 5.1 Case Study with Prettier
 To test our sandbox implementation, we use Prettier to do a case study. Prettier is an extension in VS Code marketplace that formats code written for a range of languages. We choose Prettier because it’s open source, has simple functionalities (which eases the testing process), and is ranked as the 5th most popular extension in the marketplace.
