@@ -234,6 +234,8 @@ Instead of relying on vm2, another approach may refer to the native policy permi
 ## 7 Conclusion
 In this project, we have investigated the vulnerability of the VS Code extension model. As we primarily focus on restricting file system accesses, we propose to ship access control policies as manifest files with VS Code extensions. We apply this policy by building a sandboxing layer on top of untrusted packages and supplying these to the extensions. We have traced a few most popular extensions to discover their file system access patterns in the OS level. As a proof of concept, we wrap the fs module and apply vm2 to VS Code to implement a sandboxing solution and demonstrate its effectiveness on a compromised Prettier extension.
   
+## A fs APIs
+  
 ## References
 [^1]: Android developer documentation - manifest overview. https://developer.android.com/guide/topics/manifest/manifest-intro.
 [^2]: C/C++ tools extension reading process info. https://github.com/microsoft/vscode-cpptools/blob/master/Extension/src/Debugger/attachToProcess.ts#L158.
@@ -258,5 +260,3 @@ In this project, we have investigated the vulnerability of the VS Code extension
 [^21]: Patrik Simek. vm2. https://www.npmjs.com/package/vm2.
 [^22]: Cristian Alexandru Staicu. Modifying read-only prototypes trigger runtime errors. https://github.com/patriksimek/vm2/issues/290.
 [^23]: Luca Tabone. require(‘events’) does not work on node version 12. https://github.com/patriksimek/vm2/issues/216.
-  
-## A fs APIs
