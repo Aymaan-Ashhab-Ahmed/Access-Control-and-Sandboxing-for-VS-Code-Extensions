@@ -99,6 +99,43 @@ vm2 utilizes Contextify [16], a native sandboxing mechanism of the V8 engine [9]
 #### 4.2.2 Contextifying an Extension in vm2
 Code block 1 illustrates how we sandbox the extension loading process in VS Code using vm2. While the changes presented here coincide with adding a couple dozen lines of code (excluding wrapping the fs and https modules), there were many underlying edge cases that we needed to address in order to coordinate vm2 and VS Code.
 
+```
+function loadCommonJSModule<T>(
+  logService: ILogService, modulePath: string,
+  activationTimesBuilder: ExtensionActivationTimesBuilder) : Promise<T> {
+  
+  // ...
+  const jsPath = "$HOME/.vscode/extensions/<extension-name>/<entry-file>.js"
+  const resolve = (_: string, _: string) => { return "$HOME/.vscode/extensions/<extension-name>"; };
+  
+  "$HOME/.vscode/extensions/<module-name>";
+  const script = fs.readFileSync(jsPath, { encoding: "utf8", flag: "r"});
+
+  // Based on access control policy.
+  // we generate wrappers for built-in modules.
+  // e.g. fs and https
+  let fsWrapper = ...
+  let httpsWrapper = ...
+  const options: NodeVMOptions = {
+    require: {
+      external: { modules: ["*"], transitive: true },
+      builtin: ["*"],
+      mock: {
+        vscode: require.__$__nodeRequire<T>("vscode"),
+        fs: fsWrapper,
+        https: httpsWrapper
+      },
+      context: "sandbox",
+      resolve: resolve
+    }
+  };
+  
+  let ret = <T>new NodeVM(options).run(script, modulePath);
+  // ...
+}
+```
+Listing 1: Loading extensions with vm2
+
 To load the extension, we read the file that contains the activate hook, whose directory is passed as modulePath by the extension host process. This file, along with other JavaScript files installed from the extension’s VSIX package under $HOME/.vscode/extensions/<extension-name>, may or may not have the ".js" file extension. As such, we handle this case explicitly, but it’s unclear why VS Code makes this design choice and how it’s handled internally. Since VS Code also maintains a separate node_modules folder for each extension, we tell vm2 where to look when requiring packages by passing it the callback function resolve.
 
 The sandbox environment in vm2 accepts an option object where one can declare which imported modules are allowed or blocked, and how these modules will be compiled. In code block 1, we allow all external and built-in modules. We also set the context to "sandbox" so that all modules are compiled inside the sandbox. As expected, setting this flag also prevents transitive dependencies. Note that we allow all external and built-in modules given that most VS Code extensions tend to use a number of third-party modules. Instead, in order to impose access control on file accesses, etc., we create our own wrapper modules and inject them into the sandbox (as explained in the next section).
@@ -126,6 +163,26 @@ To efficiently create wrapper functions, inspired by sandboxed-fs [17] which bin
 For each category, we create a wrapper function that takes the original fs API, policy associated with the extension, and a flag indicating if this API performs a read or write. We then apply the policy to determine if the extension is allowed to access the specified file. If not, we throw an error, else we call the original function. In this way, we can efficiently replace methods in fs with our desired wrapper module.
 
 As an example, code block 2 shows how copyFile we wrap, a method which copies a file from one path to another. Correspondingly, we check if the source is readable and if the destination is writable before calling the original copyFile. Here, the function checkAccessibility is applied, which will throw an error if the input path does not comply with the policy.
+  
+```
+\\...
+const twoPathsFuncWrapper = (func: any, policy: AccessPolicy) => (p1: string, p2: string, ...args: any) => {
+  checkAccessibility(policy, p1, "r");
+  checkAccessibility(policy, p2, "w");
+  return func(p1, p2, ...args);
+};
+
+export function make(extensionName: string) {
+  \\...
+  let wrapped = {};
+  let policy = resolveAccessPolicy(extensionName);
+  \\...
+  wrapped["copyFile"] = twoPathsFuncWrapper(fs.copyFile, policy);
+  \\...
+  return {...fs, ...wrapped};
+}
+```
+Listing 2: Wrappingfs.copyFile
   
 In addition, there are two edge cases that we handle specially. First, we have a dedicated function wrapper for open() and openSync(). With this, we do not have to wrap those “oneFileFunctions” whose 1st argument is a file descriptor (e.g. ftruncate), because before the file descriptor is obtained via an open call, the accessibility would have been checked. Second, fs provides classes ReadStream and WriteStream. Instead of wrapping these classes, we wrap their constructors createReadStream and createWriteStream in order to control how Stream objects access the file system.
   
