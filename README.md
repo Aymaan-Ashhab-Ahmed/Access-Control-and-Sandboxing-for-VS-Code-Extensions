@@ -164,8 +164,8 @@ For each category, we create a wrapper function that takes the original `fs` API
 
 | Type              | Explanation                                                                 | Examples                          |
 |-------------------|-----------------------------------------------------------------------------|-----------------------------------|
-| oneFileFunctions  | 1<sub>st</sub> argument is either path or file descriptor, may perform r/w  | `mkdir`, `readlink`, `appendFile` |
-| twoPathsFunctions | 1<sub>st</sub> and 2<sub>nd</sub> arguments are paths                       | `copyFile`, `link`, `rename`      |
+| oneFileFunctions  | 1<sup>st</sup> argument is either path or file descriptor, may perform r/w  | `mkdir`, `readlink`, `appendFile` |
+| twoPathsFunctions | 1<sup>st</sup> and 2<sup>nd</sup> arguments are paths                       | `copyFile`, `link`, `rename`      |
 | openFunction      | a standalone type for open syscall                                          | `open`, `openSync`                |
 
 *Table 2: Categories of `fs` APIs*
