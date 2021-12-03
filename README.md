@@ -235,87 +235,87 @@ Instead of relying on vm2, another approach may refer to the native policy permi
 In this project, we have investigated the vulnerability of the VS Code extension model. As we primarily focus on restricting file system accesses, we propose to ship access control policies as manifest files with VS Code extensions. We apply this policy by building a sandboxing layer on top of untrusted packages and supplying these to the extensions. We have traced a few most popular extensions to discover their file system access patterns in the OS level. As a proof of concept, we wrap the `f`s module and apply vm2 to VS Code to implement a sandboxing solution and demonstrate its effectiveness on a compromised Prettier extension.
   
 ## Appendix A fs APIs
-|     Functions     | read content | write content | read status | write status | should wrap |
-|-------------------|--------------|---------------|-------------|--------------|-------------|
-| appendFile        |              |   \checkmark  |             |              |  \checkmark |
-| appendFileSync    |              |   \checkmark  |             |              |  \checkmark |       
-| access            |              |               |  \checkmark |              |             |
-| accessSync        |              |               |  \checkmark |              |             |
-| chown             |              |               |             |  \checkmark  |  \checkmark |       
-| chownSync         |              |               |             |  \checkmark  |  \checkmark |   
-| chmod             |              |               |             |  \checkmark  |  \checkmark |  
-| chmodSync         |              |               |             |  \checkmark  |  \checkmark |
-| close             |              |               |             |              |             |
-| closeSync         |              |               |             |              |             |
-| copyFile          |  \checkmark  |   \checkmark  |             |              |  \checkmark |       
-| copyFileSync      |  \checkmark  |   \checkmark  |             |              |  \checkmark |     
-| createReadStream  |  \checkmark  |               |             |              |  \checkmark |  
-| createWriteStream |              |   \checkmark  |             |              |  \checkmark |
-| exists            |              |               |  \checkmark |              |             |
-| existsSync        |              |               |  \checkmark |              |             |
-| fchown            |              |               |             |  \checkmark  |  \checkmark |       
-| fchownSync        |              |               |             |  \checkmark  |  \checkmark |     
-| fchmod            |              |               |             |  \checkmark  |  \checkmark |   
-| fchmodSync        |              |               |             |  \checkmark  |  \checkmark | 
-| fdatasync         |              |               |             |              |             |
-| fdatasyncSync     |              |               |             |              |             |
-| fstat             |              |               |  \checkmark |              |             |
-| fstatSync         |              |               |  \checkmark |              |             |
-| fsync             |              |               |             |              |             |
-| fsyncSync         |              |               |             |              |             |
-| ftruncate         |              |   \checkmark  |             |              |  \checkmark |       
-| ftruncateSync     |              |   \checkmark  |             |              |  \checkmark |     
-| futimes           |              |               |             |  \checkmark  |  \checkmark |   
-| futimesSync       |              |               |             |  \checkmark  |  \checkmark |
-| lchown            |              |               |             |  \checkmark  |  \checkmark |
-| lchownSync        |              |               |             |  \checkmark  |  \checkmark |
-| lchmod            |              |               |             |  \checkmark  |  \checkmark |
-| lchmodSync        |              |               |             |  \checkmark  |  \checkmark |
-| link              |              |   \checkmark  |             |              |  \checkmark |
-| linkSync          |              |   \checkmark  |             |              |  \checkmark |
-| lstat             |              |               |  \checkmark |              |             |
-| lstatSync         |              |               |  \checkmark |              |             | 
-| mkdir             |              |   \checkmark  |             |              |  \checkmark |       
-| mkdirSync         |              |   \checkmark  |             |              |  \checkmark |     
-| mkdtemp           |              |   \checkmark  |             |              |  \checkmark |    
-| mkdtempSync       |              |   \checkmark  |             |              |  \checkmark |  
-| open              |  \checkmark  |   \checkmark  |             |              |  \checkmark |
-| openSync          |  \checkmark  |   \checkmark  |             |              |  \checkmark |
-| readdir           |  \checkmark  |               |             |              |  \checkmark |
-| readdirSync       |  \checkmark  |               |             |              |  \checkmark |
-| read              |  \checkmark  |               |             |              |  \checkmark |
-| readSync          |  \checkmark  |               |             |              |  \checkmark |
-| readFile          |  \checkmark  |               |             |              |  \checkmark |
-| readFileSync      |  \checkmark  |               |             |              |  \checkmark |
-| readlink          |  \checkmark  |               |             |              |  \checkmark |
-| readlinkSync      |  \checkmark  |               |             |              |  \checkmark |
-| realpath          |              |               |             |              |             |
-| realpathSync      |              |               |             |              |             |
-| rename            |              |               |             |  \checkmark  |  \checkmark |        
-| renameSync        |              |               |             |  \checkmark  |  \checkmark |     
-| rmdir             |              |   \checkmark  |             |              |  \checkmark |
-| rmdirSync         |              |   \checkmark  |             |              |  \checkmark |
-| stat              |              |               |  \checkmark |              |             |
-| statSync          |              |               |  \checkmark |              |             |  
-| symlink           |              |   \checkmark  |             |              |  \checkmark |          
-| symlinkSync       |              |   \checkmark  |             |              |  \checkmark |       
-| truncate          |              |   \checkmark  |             |              |  \checkmark |    
-| truncateSync      |              |   \checkmark  |             |              |  \checkmark |   
-| unwatchFile       |              |               |             |              |             |
-| unlink            |              |   \checkmark  |             |              |  \checkmark |       
-| unlinkSync        |              |   \checkmark  |             |              |  \checkmark |     
-| utimes            |              |               |             |  \checkmark  |  \checkmark |    
-| utimesSync        |              |               |             |  \checkmark  |  \checkmark |
-| watch             |  \checkmark  |               |  \checkmark |              |  \checkmark |
-| watchFile         |  \checkmark  |               |  \checkmark |              |  \checkmark |
-| writeFile         |              |   \checkmark  |             |              |  \checkmark |
-| writeFileSync     |              |   \checkmark  |             |              |  \checkmark |
-| write             |              |   \checkmark  |             |              |  \checkmark |
-| writeSync         |              |   \checkmark  |             |              |  \checkmark |
-| Dirent            |              |               |  \checkmark |              |             |
-| Stats             |              |               |  \checkmark |              |             |
-| ReadStream        |  \checkmark  |               |             |              |  \checkmark |      
-| WriteStream       |              |   \checkmark  |             |              |  \checkmark |
+|     Functions     |    read content    |    write content   |     read status    |    write status    |     should wrap    |
+|-------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
+|     appendFile    |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|   appendFileSync  |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       access      |                    |                    | :heavy_check_mark: |                    |                    |
+|     accessSync    |                    |                    | :heavy_check_mark: |                    |                    |
+|       chown       |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     chownSync     |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       chmod       |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     chmodSync     |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       close       |                    |                    |                    |                    |                    |
+|     closeSync     |                    |                    |                    |                    |                    |
+|      copyFile     | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|    copyFileSync   | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|  createReadStream | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| createWriteStream |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       exists      |                    |                    | :heavy_check_mark: |                    |                    |
+|     existsSync    |                    |                    | :heavy_check_mark: |                    |                    |
+|       fchown      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     fchownSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       fchmod      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     fchmodSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     fdatasync     |                    |                    |                    |                    |                    |
+|   fdatasyncSync   |                    |                    |                    |                    |                    |
+|       fstat       |                    |                    | :heavy_check_mark: |                    |                    |
+|     fstatSync     |                    |                    | :heavy_check_mark: |                    |                    |
+|       fsync       |                    |                    |                    |                    |                    |
+|     fsyncSync     |                    |                    |                    |                    |                    |
+|     ftruncate     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|   ftruncateSync   |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      futimes      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|    futimesSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       lchown      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     lchownSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       lchmod      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     lchmodSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|        link       |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      linkSync     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       lstat       |                    |                    | :heavy_check_mark: |                    |                    |
+|     lstatSync     |                    |                    | :heavy_check_mark: |                    |                    |
+|       mkdir       |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|     mkdirSync     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      mkdtemp      |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|    mkdtempSync    |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|        open       | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      openSync     | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      readdir      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|    readdirSync    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|        read       | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|      readSync     | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|      readFile     | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|    readFileSync   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|      readlink     | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|    readlinkSync   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|      realpath     |                    |                    |                    |                    |                    |
+|    realpathSync   |                    |                    |                    |                    |                    |
+|       rename      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     renameSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       rmdir       |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|     rmdirSync     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|        stat       |                    |                    | :heavy_check_mark: |                    |                    |
+|      statSync     |                    |                    | :heavy_check_mark: |                    |                    |
+|      symlink      |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|    symlinkSync    |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|      truncate     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|    truncateSync   |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|    unwatchFile    |                    |                    |                    |                    |                    |
+|       unlink      |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|     unlinkSync    |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       utimes      |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|     utimesSync    |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+|       watch       | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |
+|     watchFile     | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |
+|     writeFile     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|   writeFileSync   |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       write       |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|     writeSync     |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+|       Dirent      |                    |                    | :heavy_check_mark: |                    |                    |
+|       Stats       |                    |                    | :heavy_check_mark: |                    |                    |
+|     ReadStream    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+|    WriteStream    |                    | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 
 ## References
 [^1]: Android developer documentation - manifest overview. https://developer.android.com/guide/topics/manifest/manifest-intro.
