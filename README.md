@@ -48,14 +48,14 @@ Most of the file system behavior is as expected. However, the official C/C++ ext
 ## 3 Access Control Policy
 Based on our discoveries while monitoring extensions, we propose the following file system access policy. The policy defines the paths that an extension is allowed (an *allow list*) or disallowed (a *blocklist*) to access. It is defined in a separate manifest file intended to be shipped with the extension.
 
-| Ext.     | Usr config | Sys config    | Lib      | Other             |
-|----------|------------|---------------|----------|-------------------|
-| C/C++    | No         | Linker cache  | C libs   | /proc/pid         |
-| Java     | No         | Network hosts | JDK      |                   |
-| JS       | No         | /etc          | NPM      | /proc/filesystems |
-| TS       | Yes        | /etc          | NPM      | CPU info & /tmp   |
-| Python   | No         | No            | Py 2 & 3 |                   |
-| Prettier | prettierrc | Network hosts | NPM      | CPU info          |
+| Ext.     | Usr config   | Sys config    | Lib      | Other               |
+|----------|--------------|---------------|----------|---------------------|
+| C/C++    | No           | Linker cache  | C libs   | `/proc/pid`         |
+| Java     | No           | Network hosts | JDK      |                     |
+| JS       | No           | `/etc`        | NPM      | `/proc/filesystems` |
+| TS       | Yes          | `/etc`        | NPM      | CPU info & `/tmp`   |
+| Python   | No           | No            | Py 2 & 3 |                     |
+| Prettier | `prettierrc` | Network hosts | NPM      | CPU info            |
 
 *Table 1: strace results for popular extensions*
 
@@ -162,11 +162,11 @@ To efficiently create wrapper functions, inspired by `sandboxed-fs` [^17] which 
 
 For each category, we create a wrapper function that takes the original `fs` API, policy associated with the extension, and a flag indicating if this API performs a read or write. We then apply the policy to determine if the extension is allowed to access the specified file. If not, we throw an error, else we call the original function. In this way, we can efficiently replace methods in fs with our desired wrapper module.
 
-| Type              | Explanation                                                         | Examples                    |
-|-------------------|---------------------------------------------------------------------|-----------------------------|
-| oneFileFunctions  | 1^{st} argument is either path or file descriptor, may perform r/w  | mkdir, readlink, appendFile |
-| twoPathsFunctions | 1^{st} and 2^{nd} arguments are paths                               | copyFile, link, rename      |
-| openFunction      | a standalone type for open syscall                                  | open, openSync              |
+| Type              | Explanation                                                                 | Examples                          |
+|-------------------|-----------------------------------------------------------------------------|-----------------------------------|
+| oneFileFunctions  | 1<sub>st</sub> argument is either path or file descriptor, may perform r/w  | `mkdir`, `readlink`, `appendFile` |
+| twoPathsFunctions | 1<sub>st</sub> and 2<sub>nd</sub> arguments are paths                       | `copyFile`, `link`, `rename`      |
+| openFunction      | a standalone type for open syscall                                          | `open`, `openSync`                |
 
 *Table 2: Categories of `fs` APIs*
 
